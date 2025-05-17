@@ -5,16 +5,46 @@ on:
     branches:
       - main
 
+  pull_request:
+    branches:
+      - main
+
 env:
   AWS_REGION: ap-northeast-1
+  ECR_REPO: lambda-container-py
+  IMAGE_TAG: ${{ github.sha }}
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build Docker image
+        run: |
+          docker build -t $ECR_REPO:${{ env.IMAGE_TAG }} .
+
+      - name: Tag and Push image to ECR
+        run: |
+          IMAGE_URI="${{ steps.login-ecr.outputs.registry }}/${ECR_REPO}:${{ env.IMAGE_TAG }}"
+          docker tag $ECR_REPO:${{ env.IMAGE_TAG }} $IMAGE_URI
+          docker push $IMAGE_URI
+        id: push-image
+
+      - name: Update Lambda to use new image
+        run: |
+          aws lambda update-function-code \
+            --function-name lambda-container-py \
+            --image-uri "${{ steps.login-ecr.outputs.registry }}/${ECR_REPO}:${{ env.IMAGE_TAG }}"

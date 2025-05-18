@@ -1,0 +1,18 @@
+# terraform.yml
+name: Terraform Apply
+
+on:
+  workflow_run:
+    workflows: ["Deploy Lambda Container"]
+    types:
+      - completed
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3

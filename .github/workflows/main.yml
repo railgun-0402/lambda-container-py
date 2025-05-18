@@ -9,11 +9,6 @@ on:
     branches:
       - main
 
-  workflow_run:
-    workflows: ["Deploy Lambda Container"]
-    types:
-      - completed
-
 env:
   AWS_REGION: ap-northeast-1
   ECR_REPO: lambda-container-py
@@ -53,6 +48,3 @@ jobs:
           aws lambda update-function-code \
             --function-name lambda-container-py \
             --image-uri "${{ steps.login-ecr.outputs.registry }}/${ECR_REPO}:${{ env.IMAGE_TAG }}"
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3

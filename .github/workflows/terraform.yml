@@ -2,10 +2,13 @@
 name: Terraform Apply
 
 on:
-  workflow_run:
-    workflows: ["Deploy Lambda Container"]
-    types:
-      - completed
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
